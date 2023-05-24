@@ -1,0 +1,15 @@
+@font-face {
+    font-family: "Aegean";
+    src: ("fonts/Aegean-8jJ2.ttf");
+}
+* {
+    font-family: "Aegean";
+}
+
+input[aria-invalid="true"] {
+    border-color: red;
+}
+
+.help-block {
+    color: red;
+}

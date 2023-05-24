@@ -2,38 +2,98 @@
 
 namespace app\models;
 
-class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
+use Yii;
+
+/**
+ * This is the model class for table "user".
+ *
+ * @property int $id
+ * @property string $surname
+ * @property string $name
+ * @property string|null $patronymic
+ * @property string $login
+ * @property string $password
+ * @property string $email
+ * @property int $user_role_id
+ *
+ * @property Cart[] $carts
+ * @property OrderUser[] $orderUsers
+ * @property UserRole $userRole
+ */
+class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 {
-    public $id;
-    public $username;
-    public $password;
-    public $authKey;
-    public $accessToken;
-
-    private static $users = [
-        '100' => [
-            'id' => '100',
-            'username' => 'admin',
-            'password' => 'admin',
-            'authKey' => 'test100key',
-            'accessToken' => '100-token',
-        ],
-        '101' => [
-            'id' => '101',
-            'username' => 'demo',
-            'password' => 'demo',
-            'authKey' => 'test101key',
-            'accessToken' => '101-token',
-        ],
-    ];
-
+    /**
+     * {@inheritdoc}
+     */
+    public static function tableName()
+    {
+        return 'user';
+    }
 
     /**
      * {@inheritdoc}
      */
+    public function rules()
+    {
+        return [
+            [['surname', 'name', 'login', 'password', 'email'], 'required'],
+            [['user_role_id'], 'integer'],
+            [['surname', 'name', 'patronymic', 'login', 'password', 'email'], 'string', 'max' => 255],
+            [['login'], 'unique'],
+            [['email'], 'unique'],
+            [['user_role_id'], 'exist', 'skipOnError' => true, 'targetClass' => UserRole::class, 'targetAttribute' => ['user_role_id' => 'id']],
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'surname' => 'Surname',
+            'name' => 'Name',
+            'patronymic' => 'Patronymic',
+            'login' => 'Login',
+            'password' => 'Password',
+            'email' => 'Email',
+            'user_role_id' => 'User Role ID',
+        ];
+    }
+
+    /**
+     * Gets query for [[Carts]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getCarts()
+    {
+        return $this->hasMany(Cart::class, ['user_id' => 'id']);
+    }
+
+    /**
+     * Gets query for [[OrderUsers]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getOrderUsers()
+    {
+        return $this->hasMany(OrderUser::class, ['user_id' => 'id']);
+    }
+
+    /**
+     * Gets query for [[UserRole]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getUserRole()
+    {
+        return $this->hasOne(UserRole::class, ['id' => 'user_role_id']);
+    }
     public static function findIdentity($id)
     {
-        return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
+        return static::findOne($id);
     }
 
     /**
@@ -41,11 +101,6 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public static function findIdentityByAccessToken($token, $type = null)
     {
-        foreach (self::$users as $user) {
-            if ($user['accessToken'] === $token) {
-                return new static($user);
-            }
-        }
 
         return null;
     }
@@ -56,15 +111,9 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      * @param string $username
      * @return static|null
      */
-    public static function findByUsername($username)
+    public static function findByUsername($login)
     {
-        foreach (self::$users as $user) {
-            if (strcasecmp($user['username'], $username) === 0) {
-                return new static($user);
-            }
-        }
-
-        return null;
+        return User::findOne(['login' => $login]);
     }
 
     /**
@@ -80,7 +129,7 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public function getAuthKey()
     {
-        return $this->authKey;
+        return null;
     }
 
     /**
@@ -88,7 +137,7 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public function validateAuthKey($authKey)
     {
-        return $this->authKey === $authKey;
+        return false;
     }
 
     /**
@@ -100,5 +149,9 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
     public function validatePassword($password)
     {
         return $this->password === $password;
+    }
+    public function isAdmin()
+    {
+        return $this->userRole === "admin";
     }
 }
