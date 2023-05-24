@@ -15,8 +15,10 @@ class SiteController extends Controller
     /**
      * {@inheritdoc}
      */
+
     public function behaviors()
     {
+
         return [
             'access' => [
                 'class' => AccessControl::className(),
@@ -77,6 +79,10 @@ class SiteController extends Controller
 
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
+            // перенеаправлние
+            if (Yii::$app->user->identity->isAdmin()) {
+                return $this->redirect(['/admin']);
+            }
             return $this->goBack();
         }
 

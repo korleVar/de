@@ -18,17 +18,24 @@ class UserController extends Controller
      */
     public function behaviors()
     {
-        return array_merge(
-            parent::behaviors(),
-            [
-                'verbs' => [
-                    'class' => VerbFilter::className(),
-                    'actions' => [
-                        'delete' => ['POST'],
+        return [
+            'access' => [
+                'class' => \yii\filters\AccessControl::class,
+                'only' => ['index', 'view', 'update', 'delete'],
+                'rules' => [
+                    [
+                        'actions' => ['index', 'view', 'update', 'delete'],
+                        'allow' => true,
+                        'roles' => ['@'],
+                        'matchCallback' => function ($rule, $action) {
+                            return \Yii::$app->user->identity->isAdmin();
+                        }
+
                     ],
                 ],
-            ]
-        );
+            ],
+
+        ];
     }
 
     /**
@@ -78,10 +85,15 @@ class UserController extends Controller
     public function actionCreate()
     {
         $model = new User();
+        // проверка валадиции
+        if (\Yii::$app->request->isAjax && $model->load(\Yii::$app->request->post())) {
+            \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+            return \yii\bootstrap4\ActiveForm::validate($model);
+        }
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
+                return $this->redirect(['/site/login']);
             }
         } else {
             $model->loadDefaultValues();

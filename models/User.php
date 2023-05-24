@@ -42,23 +42,37 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
             [['login'], 'unique'],
             [['email'], 'unique'],
             [['user_role_id'], 'exist', 'skipOnError' => true, 'targetClass' => UserRole::class, 'targetAttribute' => ['user_role_id' => 'id']],
+            // правила валидации
+            [['surname', 'name', 'patronymic'], 'match', 'pattern' => '/^[a-яА-ЯёЁ -]+$/u', 'message' => 'Разрешены русские буквы, пробел и тире'],
+            [['login'], 'match', 'pattern' => '/^[a-zA-Z0-9-]+$/i', 'message' => 'Разрешены латинские
+буквы, цифры и тире'],
+            [['email'], 'email'],
+            [['password_repeat'], 'compare', 'compareAttribute' => 'password', 'message' => 'Пароли не
+совпадают'],
+            [['rule'], 'compare', 'compareValue' => 1, 'message' => 'Согласитесь с правилами регистрации
+на сайте'],
+
         ];
     }
 
     /**
      * {@inheritdoc}
      */
+    public $password_repeat;
+    public $rule;
     public function attributeLabels()
     {
         return [
             'id' => 'ID',
-            'surname' => 'Surname',
-            'name' => 'Name',
-            'patronymic' => 'Patronymic',
-            'login' => 'Login',
-            'password' => 'Password',
-            'email' => 'Email',
+            'surname' => 'Фамиля',
+            'name' => 'ИМя',
+            'patronymic' => 'Отчёство',
+            'login' => 'Логин',
+            'password' => 'Пароль',
+            'password_repeat' => 'Пароль повтор',
+            'email' => 'Почта',
             'user_role_id' => 'User Role ID',
+            'rule' => 'я согласен',
         ];
     }
 
