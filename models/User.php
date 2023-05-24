@@ -107,6 +107,7 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 
     /**
      * Finds user by username
+     * 
      *
      * @param string $username
      * @return static|null
